@@ -33,8 +33,14 @@ let map_l_to_r wiring top_letter input_pos =
 (* a reflector works like a rotor that never turns *)
 let map_refl wiring input_pos = map_r_to_l wiring 'A' input_pos
 
-let map_plug _plugs _c =
-  failwith "Unimplemented"
+(* look through each wire, swap c if it is on one end *)
+let rec map_plug plugs c =
+  match plugs with
+  | [] -> c
+  | (a, b) :: rest ->
+      if c = a then b
+      else if c = b then a
+      else map_plug rest c
 
 let cipher_char _config _c =
   failwith "Unimplemented"

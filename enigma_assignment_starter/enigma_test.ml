@@ -90,9 +90,39 @@ let map_refl_tests =
     reflect_twice_test "map_refl twice gives start for refl_C" refl_C;
   ]
 
+let one_pair = [ ('A', 'Z') ]
+let two_pairs = [ ('A', 'Z'); ('X', 'Y') ]
+let two_pairs_flipped = [ ('Y', 'X'); ('Z', 'A') ]
+
+let map_plug_test name plugs input expected =
+  name >:: fun _ ->
+    assert_equal expected (map_plug plugs input) ~printer:(String.make 1)
+
+let map_plug_tests =
+  [
+    map_plug_test "map_plug empty A is A" [] 'A' 'A';
+    map_plug_test "map_plug empty Z is Z" [] 'Z' 'Z';
+    map_plug_test "map_plug one_pair A is Z" one_pair 'A' 'Z';
+    map_plug_test "map_plug one_pair Z is A" one_pair 'Z' 'A';
+    map_plug_test "map_plug one_pair B is B" one_pair 'B' 'B';
+    map_plug_test "map_plug two_pairs A is Z" two_pairs 'A' 'Z';
+    map_plug_test "map_plug two_pairs Z is A" two_pairs 'Z' 'A';
+    map_plug_test "map_plug two_pairs X is Y" two_pairs 'X' 'Y';
+    map_plug_test "map_plug two_pairs Y is X" two_pairs 'Y' 'X';
+    map_plug_test "map_plug two_pairs M is M" two_pairs 'M' 'M';
+    map_plug_test "map_plug two_pairs_flipped A is Z" two_pairs_flipped 'A' 'Z';
+    map_plug_test "map_plug two_pairs_flipped X is Y" two_pairs_flipped 'X' 'Y';
+  ]
+
 let suite =
   "Enigma test suite"
   >::: List.flatten
-         [ index_tests; map_r_to_l_tests; map_l_to_r_tests; map_refl_tests ]
+         [
+           index_tests;
+           map_r_to_l_tests;
+           map_l_to_r_tests;
+           map_refl_tests;
+           map_plug_tests;
+         ]
 
 let () = run_test_tt_main suite
