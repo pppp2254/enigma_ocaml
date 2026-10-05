@@ -114,6 +114,52 @@ let map_plug_tests =
     map_plug_test "map_plug two_pairs_flipped X is Y" two_pairs_flipped 'X' 'Y';
   ]
 
+let rotor_II = "AJDKSIRUXBLHWTMCQGZNPYFVOE"
+
+(* a rotor set to a top letter *)
+let set wiring turnover top =
+  { rotor = { wiring; turnover }; top_letter = top }
+
+(* no rotors, no cables, identity reflector *)
+let empty_machine = { refl = identity; rotors = []; plugboard = [] }
+
+(* reflector B, rotors I II III all at A, no cables *)
+let machine_AAA =
+  {
+    refl = refl_B;
+    rotors =
+      [ set rotor_I 'Q' 'A'; set rotor_II 'E' 'A'; set rotor_III 'V' 'A' ];
+    plugboard = [];
+  }
+
+let machine_AAA_plug_AG = { machine_AAA with plugboard = [ ('A', 'G') ] }
+
+let cipher_char_test name config input expected =
+  name >:: fun _ ->
+    assert_equal expected (cipher_char config input) ~printer:(String.make 1)
+
+(* cipher every letter A to Z and compare with the expected 26 letters *)
+let cipher_char_all_test name config expected =
+  name >:: fun _ ->
+    assert_equal expected (String.map (cipher_char config) identity)
+      ~printer:(fun s -> s)
+
+let cipher_char_tests =
+  [
+    cipher_char_all_test "cipher_char empty_machine keeps every letter"
+      empty_machine identity;
+    cipher_char_test "cipher_char machine_AAA G is P" machine_AAA 'G' 'P';
+    cipher_char_test "cipher_char machine_AAA A is U" machine_AAA 'A' 'U';
+    cipher_char_test "cipher_char machine_AAA Z is H" machine_AAA 'Z' 'H';
+    cipher_char_test "cipher_char machine_AAA P is G" machine_AAA 'P' 'G';
+    cipher_char_all_test "cipher_char machine_AAA whole alphabet" machine_AAA
+      "UEJOBTPZWCNSRKDGVMLFAQIYXH";
+    cipher_char_test "cipher_char machine_AAA_plug_AG A is P"
+      machine_AAA_plug_AG 'A' 'P';
+    cipher_char_test "cipher_char machine_AAA_plug_AG P is A"
+      machine_AAA_plug_AG 'P' 'A';
+  ]
+
 let suite =
   "Enigma test suite"
   >::: List.flatten
@@ -123,6 +169,7 @@ let suite =
            map_l_to_r_tests;
            map_refl_tests;
            map_plug_tests;
+           cipher_char_tests;
          ]
 
 let () = run_test_tt_main suite

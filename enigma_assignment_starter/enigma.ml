@@ -42,8 +42,27 @@ let rec map_plug plugs c =
       else if c = b then a
       else map_plug rest c
 
-let cipher_char _config _c =
-  failwith "Unimplemented"
+(* rotors are listed left to right but the signal enters on the right,
+   so pass through the rest of the list first, then this rotor *)
+let rec map_rotors_r_to_l rotors pos =
+  match rotors with
+  | [] -> pos
+  | r :: rest ->
+      map_r_to_l r.rotor.wiring r.top_letter (map_rotors_r_to_l rest pos)
+
+(* on the way back the leftmost rotor comes first *)
+let rec map_rotors_l_to_r rotors pos =
+  match rotors with
+  | [] -> pos
+  | r :: rest ->
+      map_rotors_l_to_r rest (map_l_to_r r.rotor.wiring r.top_letter pos)
+
+let cipher_char config c =
+  let start = index (map_plug config.plugboard c) in
+  let at_reflector = map_rotors_r_to_l config.rotors start in
+  let back = map_refl config.refl at_reflector in
+  let finish = map_rotors_l_to_r config.rotors back in
+  map_plug config.plugboard (Char.chr (finish + Char.code 'A'))
 
 let step _config =
   failwith "Unimplemented"
