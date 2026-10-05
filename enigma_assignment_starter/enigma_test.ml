@@ -63,8 +63,36 @@ let map_l_to_r_tests =
     round_trip_test "round trip rotor III top O" rotor_III 'O';
   ]
 
+let refl_B = "YRUHQSLDPXNGOKMIEBFZCWVJAT"
+let refl_C = "FVPJIAOYEDRZXWGCTKUQSBNMHL"
+
+let map_refl_test name wiring input expected =
+  name >:: fun _ ->
+    assert_equal expected (map_refl wiring input) ~printer:string_of_int
+
+(* reflecting twice gives the start position *)
+let reflect_twice_test name wiring =
+  name >:: fun _ ->
+    let all = List.init 26 (fun i -> i) in
+    let back = List.map (fun i -> map_refl wiring (map_refl wiring i)) all in
+    assert_equal all back
+
+let map_refl_tests =
+  [
+    map_refl_test "refl identity 0" identity 0 0;
+    map_refl_test "refl identity 1" identity 1 1;
+    map_refl_test "refl identity 25" identity 25 25;
+    map_refl_test "refl B 0" refl_B 0 24;
+    map_refl_test "refl B 24" refl_B 24 0;
+    map_refl_test "refl C 0" refl_C 0 5;
+    map_refl_test "refl C 5" refl_C 5 0;
+    reflect_twice_test "reflect twice B" refl_B;
+    reflect_twice_test "reflect twice C" refl_C;
+  ]
+
 let suite =
   "Enigma test suite"
-  >::: List.flatten [ index_tests; map_r_to_l_tests; map_l_to_r_tests ]
+  >::: List.flatten
+         [ index_tests; map_r_to_l_tests; map_l_to_r_tests; map_refl_tests ]
 
 let () = run_test_tt_main suite

@@ -30,8 +30,8 @@ let map_l_to_r wiring top_letter input_pos =
   let letter = Char.chr (contact + Char.code 'A') in
   wrap (String.index wiring letter - offset)
 
-let map_refl _wiring _input_pos =
-  failwith "Unimplemented"
+(* a reflector works like a rotor that never turns *)
+let map_refl wiring input_pos = map_r_to_l wiring 'A' input_pos
 
 let map_plug _plugs _c =
   failwith "Unimplemented"
@@ -45,4 +45,4 @@ let step _config =
 let cipher _config _s =
   failwith "Unimplemented"
 
-let hours_worked = 0
+let hours_worked = 1
