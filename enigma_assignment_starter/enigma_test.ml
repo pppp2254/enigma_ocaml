@@ -7,11 +7,11 @@ let index_test name input expected =
 
 let index_tests =
   [
-    index_test "index of A is 0" 'A' 0;
-    index_test "index of B is 1" 'B' 1;
-    index_test "index of C is 2" 'C' 2;
-    index_test "index of M is 12" 'M' 12;
-    index_test "index of Z is 25" 'Z' 25;
+    index_test "index A is 0" 'A' 0;
+    index_test "index B is 1" 'B' 1;
+    index_test "index C is 2" 'C' 2;
+    index_test "index M is 12" 'M' 12;
+    index_test "index Z is 25" 'Z' 25;
   ]
 
 let identity = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -25,17 +25,17 @@ let map_r_to_l_test name wiring top input expected =
 
 let map_r_to_l_tests =
   [
-    map_r_to_l_test "r to l identity A 0" identity 'A' 0 0;
-    map_r_to_l_test "r to l identity C 5" identity 'C' 5 5;
-    map_r_to_l_test "r to l swap_ab A 0" swap_ab 'A' 0 1;
-    map_r_to_l_test "r to l swap_ab A 1" swap_ab 'A' 1 0;
-    map_r_to_l_test "r to l swap_ab A 2" swap_ab 'A' 2 2;
-    map_r_to_l_test "r to l swap_ab B 0 wraps below 0" swap_ab 'B' 0 25;
-    map_r_to_l_test "r to l swap_ab B 25 wraps above 25" swap_ab 'B' 25 0;
-    map_r_to_l_test "r to l swap_ab C 0" swap_ab 'C' 0 0;
-    map_r_to_l_test "r to l rotor I A 0" rotor_I 'A' 0 4;
-    map_r_to_l_test "r to l rotor I B 0" rotor_I 'B' 0 9;
-    map_r_to_l_test "r to l rotor III O 14" rotor_III 'O' 14 17;
+    map_r_to_l_test "map_r_to_l identity A 0 is 0" identity 'A' 0 0;
+    map_r_to_l_test "map_r_to_l identity C 5 is 5" identity 'C' 5 5;
+    map_r_to_l_test "map_r_to_l swap_ab A 0 is 1" swap_ab 'A' 0 1;
+    map_r_to_l_test "map_r_to_l swap_ab A 1 is 0" swap_ab 'A' 1 0;
+    map_r_to_l_test "map_r_to_l swap_ab A 2 is 2" swap_ab 'A' 2 2;
+    map_r_to_l_test "map_r_to_l swap_ab B 0 is 25" swap_ab 'B' 0 25;
+    map_r_to_l_test "map_r_to_l swap_ab B 25 is 0" swap_ab 'B' 25 0;
+    map_r_to_l_test "map_r_to_l swap_ab C 0 is 0" swap_ab 'C' 0 0;
+    map_r_to_l_test "map_r_to_l rotor_I A 0 is 4" rotor_I 'A' 0 4;
+    map_r_to_l_test "map_r_to_l rotor_I B 0 is 9" rotor_I 'B' 0 9;
+    map_r_to_l_test "map_r_to_l rotor_III O 14 is 17" rotor_III 'O' 14 17;
   ]
 
 let map_l_to_r_test name wiring top input expected =
@@ -53,14 +53,14 @@ let round_trip_test name wiring top =
 
 let map_l_to_r_tests =
   [
-    map_l_to_r_test "l to r identity A 0" identity 'A' 0 0;
-    map_l_to_r_test "l to r swap_ab A 0" swap_ab 'A' 0 1;
-    map_l_to_r_test "l to r swap_ab B 0 wraps below 0" swap_ab 'B' 0 25;
-    map_l_to_r_test "l to r swap_ab C 0" swap_ab 'C' 0 0;
-    map_l_to_r_test "l to r rotor I A 0" rotor_I 'A' 0 20;
-    map_l_to_r_test "l to r rotor I F 10" rotor_I 'F' 10 14;
-    round_trip_test "round trip rotor I top B" rotor_I 'B';
-    round_trip_test "round trip rotor III top O" rotor_III 'O';
+    map_l_to_r_test "map_l_to_r identity A 0 is 0" identity 'A' 0 0;
+    map_l_to_r_test "map_l_to_r swap_ab A 0 is 1" swap_ab 'A' 0 1;
+    map_l_to_r_test "map_l_to_r swap_ab B 0 is 25" swap_ab 'B' 0 25;
+    map_l_to_r_test "map_l_to_r swap_ab C 0 is 0" swap_ab 'C' 0 0;
+    map_l_to_r_test "map_l_to_r rotor_I A 0 is 20" rotor_I 'A' 0 20;
+    map_l_to_r_test "map_l_to_r rotor_I F 10 is 14" rotor_I 'F' 10 14;
+    round_trip_test "map_l_to_r undoes map_r_to_l for rotor_I B" rotor_I 'B';
+    round_trip_test "map_l_to_r undoes map_r_to_l for rotor_III O" rotor_III 'O';
   ]
 
 let refl_B = "YRUHQSLDPXNGOKMIEBFZCWVJAT"
@@ -79,15 +79,15 @@ let reflect_twice_test name wiring =
 
 let map_refl_tests =
   [
-    map_refl_test "refl identity 0" identity 0 0;
-    map_refl_test "refl identity 1" identity 1 1;
-    map_refl_test "refl identity 25" identity 25 25;
-    map_refl_test "refl B 0" refl_B 0 24;
-    map_refl_test "refl B 24" refl_B 24 0;
-    map_refl_test "refl C 0" refl_C 0 5;
-    map_refl_test "refl C 5" refl_C 5 0;
-    reflect_twice_test "reflect twice B" refl_B;
-    reflect_twice_test "reflect twice C" refl_C;
+    map_refl_test "map_refl identity 0 is 0" identity 0 0;
+    map_refl_test "map_refl identity 1 is 1" identity 1 1;
+    map_refl_test "map_refl identity 25 is 25" identity 25 25;
+    map_refl_test "map_refl refl_B 0 is 24" refl_B 0 24;
+    map_refl_test "map_refl refl_B 24 is 0" refl_B 24 0;
+    map_refl_test "map_refl refl_C 0 is 5" refl_C 0 5;
+    map_refl_test "map_refl refl_C 5 is 0" refl_C 5 0;
+    reflect_twice_test "map_refl twice gives start for refl_B" refl_B;
+    reflect_twice_test "map_refl twice gives start for refl_C" refl_C;
   ]
 
 let suite =
