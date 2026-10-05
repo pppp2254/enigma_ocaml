@@ -1,8 +1,0 @@
-(library
- (name enigma)
- (modules enigma))
-
-(test
- (name enigma_test)
- (modules enigma_test)
- (libraries enigma ounit2))
