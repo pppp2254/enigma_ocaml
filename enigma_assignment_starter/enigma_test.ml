@@ -160,6 +160,88 @@ let cipher_char_tests =
       machine_AAA_plug_AG 'P' 'A';
   ]
 
+(* top letters of all rotors, left to right, as one string *)
+let tops config =
+  String.concat "" (List.map (fun r -> String.make 1 r.top_letter) config.rotors)
+
+(* rotors I II III with the given top letters, reflector B *)
+let machine_I_II_III a b c =
+  {
+    machine_AAA with
+    rotors = [ set rotor_I 'Q' a; set rotor_II 'E' b; set rotor_III 'V' c ];
+  }
+
+let one_rotor top = { machine_AAA with rotors = [ set rotor_I 'Q' top ] }
+
+let step_test name config expected =
+  name >:: fun _ -> assert_equal expected (tops (step config)) ~printer:(fun s -> s)
+
+(* rule 1: the rightmost rotor always steps *)
+let step_rule_1_tests =
+  [
+    step_test "step one_rotor A is B" (one_rotor 'A') "B";
+    step_test "step one_rotor Z is A" (one_rotor 'Z') "A";
+    step_test "step empty_machine stays empty" empty_machine "";
+    step_test "step I II III AAA is AAB" (machine_I_II_III 'A' 'A' 'A') "AAB";
+    step_test "step I II III AAZ is AAA" (machine_I_II_III 'A' 'A' 'Z') "AAA";
+    ( "step keeps reflector and plugboard" >:: fun _ ->
+      let after = step machine_AAA_plug_AG in
+      assert_equal machine_AAA_plug_AG.refl after.refl;
+      assert_equal machine_AAA_plug_AG.plugboard after.plugboard );
+  ]
+
+(* rotors III II I with the given top letters, reflector B *)
+let machine_III_II_I a b c =
+  {
+    machine_AAA with
+    rotors = [ set rotor_III 'V' a; set rotor_II 'E' b; set rotor_I 'Q' c ];
+  }
+
+(* top letters after each of n steps *)
+let rec run_steps config n =
+  if n = 0 then []
+  else
+    let next = step config in
+    tops next :: run_steps next (n - 1)
+
+let step_sequence_test name config expected =
+  name >:: fun _ ->
+    assert_equal expected
+      (run_steps config (List.length expected))
+      ~printer:(String.concat " ")
+
+(* rule 2: a rotor at its turnover steps, and so does the one on its left *)
+let step_rule_2_tests =
+  [
+    step_test "step I II III AAQ is AAR" (machine_I_II_III 'A' 'A' 'Q') "AAR";
+    step_test "step I II III AAV is ABW" (machine_I_II_III 'A' 'A' 'V') "ABW";
+    step_test "step I II III ADA is ADB" (machine_I_II_III 'A' 'D' 'A') "ADB";
+    step_test "step I II III AEA is BFB" (machine_I_II_III 'A' 'E' 'A') "BFB";
+    step_test "step I II III QAA is QAB" (machine_I_II_III 'Q' 'A' 'A') "QAB";
+    step_sequence_test "step III II I KDO gives KDP KDQ KER LFS LFT LFU"
+      (machine_III_II_I 'K' 'D' 'O')
+      [ "KDP"; "KDQ"; "KER"; "LFS"; "LFT"; "LFU" ];
+    step_sequence_test "step III II I VDP gives VDQ VER WFS WFT"
+      (machine_III_II_I 'V' 'D' 'P')
+      [ "VDQ"; "VER"; "WFS"; "WFT" ];
+  ]
+
+(* rule 3: a rotor with two reasons to turn still turns only once *)
+let step_rule_3_tests =
+  [
+    step_test "step one_rotor Q is R" (one_rotor 'Q') "R";
+    step_test "step I II III AEV is BFW" (machine_I_II_III 'A' 'E' 'V') "BFW";
+    step_test "step I II III QEV is RFW" (machine_I_II_III 'Q' 'E' 'V') "RFW";
+  ]
+
+(* all step tests in one list, each rule keeps its own group name *)
+let step_tests =
+  [
+    "rule 1" >::: step_rule_1_tests;
+    "rule 2" >::: step_rule_2_tests;
+    "rule 3" >::: step_rule_3_tests;
+  ]
+
 let suite =
   "Enigma test suite"
   >::: List.flatten
@@ -170,6 +252,7 @@ let suite =
            map_refl_tests;
            map_plug_tests;
            cipher_char_tests;
+           step_tests;
          ]
 
 let () = run_test_tt_main suite

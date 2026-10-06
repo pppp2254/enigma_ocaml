@@ -42,15 +42,14 @@ let rec map_plug plugs c =
       else if c = b then a
       else map_plug rest c
 
-(* rotors are listed left to right but the signal enters on the right,
-   so pass through the rest of the list first, then this rotor *)
+(* signal enters on the right *)
 let rec map_rotors_r_to_l rotors pos =
   match rotors with
   | [] -> pos
   | r :: rest ->
       map_r_to_l r.rotor.wiring r.top_letter (map_rotors_r_to_l rest pos)
 
-(* on the way back the leftmost rotor comes first *)
+(* signal enters on the left *)
 let rec map_rotors_l_to_r rotors pos =
   match rotors with
   | [] -> pos
@@ -64,8 +63,26 @@ let cipher_char config c =
   let finish = map_rotors_l_to_r config.rotors back in
   map_plug config.plugboard (Char.chr (finish + Char.code 'A'))
 
-let step _config =
-  failwith "Unimplemented"
+(* turn a rotor by one letter, Z goes back to A *)
+let advance r =
+  let next = wrap (index r.top_letter + 1) in
+  { r with top_letter = Char.chr (next + Char.code 'A') }
+
+let at_turnover r = r.top_letter = r.rotor.turnover
+
+(* Stepping rules from left to right:
+   1. Rightmost always steps.
+   2. Steps if the rotor to its right is at turnover.
+   3. Double-stepping: steps if at its own turnover except leftmost. *)
+let rec step_rotors is_leftmost rotors =
+  match rotors with
+  | [] -> []
+  | [ r ] -> [ advance r ]
+  | r :: (right :: _ as rest) ->
+      let turns = at_turnover right || (at_turnover r && not is_leftmost) in
+      (if turns then advance r else r) :: step_rotors false rest
+
+let step config = { config with rotors = step_rotors true config.rotors }
 
 let cipher _config _s =
   failwith "Unimplemented"
