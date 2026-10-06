@@ -242,6 +242,37 @@ let step_tests =
     "rule 3" >::: step_rule_3_tests;
   ]
 
+(* reflector B, rotors I II III at F U N, one cable A to Z *)
+let machine_FUN_plug_AZ =
+  { (machine_I_II_III 'F' 'U' 'N') with plugboard = [ ('A', 'Z') ] }
+
+let cipher_test name config input expected =
+  name >:: fun _ -> assert_equal expected (cipher config input) ~printer:(fun s -> s)
+
+(* cipher twice from the same start gives the message back *)
+let cipher_twice_test name config message =
+  name >:: fun _ ->
+    assert_equal message (cipher config (cipher config message))
+      ~printer:(fun s -> s)
+
+let cipher_tests =
+  [
+    cipher_test "cipher machine_AAA empty string is empty" machine_AAA "" "";
+    cipher_test "cipher empty_machine HELLO is HELLO" empty_machine "HELLO"
+      "HELLO";
+    cipher_test "cipher machine_AAA A is B" machine_AAA "A" "B";
+    cipher_test "cipher machine_AAA AAAAA is BDZGO" machine_AAA "AAAAA" "BDZGO";
+    cipher_test "cipher machine_FUN_plug_AZ YNGXQ is OCAML" machine_FUN_plug_AZ
+      "YNGXQ" "OCAML";
+    cipher_twice_test "cipher twice gives HELLO for machine_AAA" machine_AAA
+      "HELLO";
+    cipher_twice_test "cipher twice gives HELLO for machine_FUN_plug_AZ"
+      machine_FUN_plug_AZ "HELLO";
+    cipher_twice_test "cipher twice gives long text for III II I KDO"
+      (machine_III_II_I 'K' 'D' 'O')
+      "THEQUICKBROWNFOXJUMPSOVERTHELAZYDOG";
+  ]
+
 let suite =
   "Enigma test suite"
   >::: List.flatten
@@ -253,6 +284,7 @@ let suite =
            map_plug_tests;
            cipher_char_tests;
            step_tests;
+           cipher_tests;
          ]
 
 let () = run_test_tt_main suite

@@ -16,7 +16,7 @@ type config = {
 
 let index c = Char.code c - Char.code 'A'
 
-(* keep n in 0 to 25 even when n is negative *)
+(** [wrap n] wraps [n] into 0-25 range safely for negative numbers. *)
 let wrap n = ((n mod 26) + 26) mod 26
 
 let map_r_to_l wiring top_letter input_pos =
@@ -30,50 +30,55 @@ let map_l_to_r wiring top_letter input_pos =
   let letter = Char.chr (contact + Char.code 'A') in
   wrap (String.index wiring letter - offset)
 
-(* a reflector works like a rotor that never turns *)
+(* A reflector acts as a stationary rotor *)
 let map_refl wiring input_pos = map_r_to_l wiring 'A' input_pos
 
-(* look through each wire, swap c if it is on one end *)
+(* Swaps c if connected to a plugboard pair *)
 let rec map_plug plugs c =
   match plugs with
   | [] -> c
-  | (a, b) :: rest ->
-      if c = a then b
-      else if c = b then a
+  | (one_end, other_end) :: rest ->
+      if c = one_end then other_end
+      else if c = other_end then one_end
       else map_plug rest c
 
-(* signal enters on the right *)
-let rec map_rotors_r_to_l rotors pos =
+(** [map_rotors_r_to_l rotors input_pos] passes signal right-to-left. *)
+let rec map_rotors_r_to_l rotors input_pos =
   match rotors with
-  | [] -> pos
+  | [] -> input_pos
   | r :: rest ->
-      map_r_to_l r.rotor.wiring r.top_letter (map_rotors_r_to_l rest pos)
+      map_r_to_l r.rotor.wiring r.top_letter (map_rotors_r_to_l rest input_pos)
 
-(* signal enters on the left *)
-let rec map_rotors_l_to_r rotors pos =
+(** [map_rotors_l_to_r rotors input_pos] passes signal left-to-right. *)
+let rec map_rotors_l_to_r rotors input_pos =
   match rotors with
-  | [] -> pos
+  | [] -> input_pos
   | r :: rest ->
-      map_rotors_l_to_r rest (map_l_to_r r.rotor.wiring r.top_letter pos)
+      map_rotors_l_to_r rest (map_l_to_r r.rotor.wiring r.top_letter input_pos)
 
+(* Signal path: plugboard -> rotors -> reflector -> rotors -> plugboard *)
 let cipher_char config c =
-  let start = index (map_plug config.plugboard c) in
-  let at_reflector = map_rotors_r_to_l config.rotors start in
-  let back = map_refl config.refl at_reflector in
-  let finish = map_rotors_l_to_r config.rotors back in
-  map_plug config.plugboard (Char.chr (finish + Char.code 'A'))
+  c
+  |> map_plug config.plugboard
+  |> index
+  |> map_rotors_r_to_l config.rotors
+  |> map_refl config.refl
+  |> map_rotors_l_to_r config.rotors
+  |> ( + ) (Char.code 'A')
+  |> Char.chr
+  |> map_plug config.plugboard
 
-(* turn a rotor by one letter, Z goes back to A *)
+(** [advance r] moves top letter forward by one, wrapping 'Z' to 'A'. *)
 let advance r =
-  let next = wrap (index r.top_letter + 1) in
-  { r with top_letter = Char.chr (next + Char.code 'A') }
+  let next_pos = wrap (index r.top_letter + 1) in
+  { r with top_letter = Char.chr (next_pos + Char.code 'A') }
 
+(** [at_turnover r] is true when top letter equals turnover letter. *)
 let at_turnover r = r.top_letter = r.rotor.turnover
 
-(* Stepping rules from left to right:
-   1. Rightmost always steps.
-   2. Steps if the rotor to its right is at turnover.
-   3. Double-stepping: steps if at its own turnover except leftmost. *)
+(** [step_rotors is_leftmost rotors] steps [rotors] (left to right).
+    A rotor turns if it is rightmost, if the rotor on its right is at
+    turnover, or if it is at its own turnover and not leftmost. *)
 let rec step_rotors is_leftmost rotors =
   match rotors with
   | [] -> []
@@ -82,9 +87,24 @@ let rec step_rotors is_leftmost rotors =
       let turns = at_turnover right || (at_turnover r && not is_leftmost) in
       (if turns then advance r else r) :: step_rotors false rest
 
+(* Creates new config with stepped rotors *)
 let step config = { config with rotors = step_rotors true config.rotors }
 
-let cipher _config _s =
-  failwith "Unimplemented"
+(** [cipher_list config chars] steps machine then ciphers each character. *)
+let rec cipher_list config chars =
+  match chars with
+  | [] -> []
+  | c :: rest ->
+      let stepped = step config in
+      cipher_char stepped c :: cipher_list stepped rest
 
-let hours_worked = 1
+(* Converts string to list, ciphers, and converts back to string *)
+let cipher config message =
+  message
+  |> String.to_seq
+  |> List.of_seq
+  |> cipher_list config
+  |> List.to_seq
+  |> String.of_seq
+
+let hours_worked = 4
